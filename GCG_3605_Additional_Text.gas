@@ -1,0 +1,213 @@
+Program.Sub.ScreenSU.Start
+gui.Form1..create
+gui.Form1..caption("Additional Text")
+gui.Form1..size(9960,3780)
+gui.Form1..minx(0)
+gui.Form1..miny(0)
+gui.Form1..position(0,0)
+gui.Form1..event(unload,form1_unload)
+gui.Form1..alwaysontop(False)
+gui.Form1..fontname("Arial")
+gui.Form1..fontsize(8)
+gui.Form1..forecolor(0)
+gui.Form1..fontstyle(,,,,)
+gui.Form1..BackColor(-2147483633)
+gui.Form1..controlbox(True)
+gui.Form1..maxbutton(True)
+gui.Form1..minbutton(True)
+gui.Form1..mousepointer(0)
+gui.Form1..moveable(True)
+gui.Form1..sizeable(True)
+gui.Form1..ShowInTaskBar(True)
+gui.Form1..titlebar(True)
+gui.Form1.lblquote.create(label,"Associated with Quote",True,1935,255,1,200,200,True,0,Arial,8,-2147483633,0)
+gui.Form1.lblquote.defaultvalue("")
+gui.Form1.lblquote.controlgroup(0)
+gui.Form1.txt1.create(textbox,"",True,1215,300,0,2100,100,True,0,Arial,8,-2147483643,1)
+gui.Form1.txt1.defaultvalue("")
+gui.Form1.txt1.controlgroup(0)
+gui.Form1.mltxt1.create(textboxm)
+gui.Form1.mltxt1.text("")
+gui.Form1.mltxt1.visible(True)
+gui.Form1.mltxt1.size(9315,1740)
+gui.Form1.mltxt1.zorder(0)
+gui.Form1.mltxt1.position(200,710)
+gui.Form1.mltxt1.enabled(True)
+gui.Form1.mltxt1.alignment(0)
+gui.Form1.mltxt1.fontname("Arial")
+gui.Form1.mltxt1.fontsize(8)
+gui.Form1.mltxt1.BackColor(-2147483643)
+gui.Form1.mltxt1.defaultvalue("")
+gui.Form1.mltxt1.controlgroup(0)
+gui.Form1.cmdUpdate.create(button)
+gui.Form1.cmdUpdate.caption("Update")
+gui.Form1.cmdUpdate.visible(True)
+gui.Form1.cmdUpdate.size(855,375)
+gui.Form1.cmdUpdate.zorder(0)
+gui.Form1.cmdUpdate.position(200,2655)
+gui.Form1.cmdUpdate.enabled(True)
+gui.Form1.cmdUpdate.fontname("Arial")
+gui.Form1.cmdUpdate.fontsize(8)
+gui.Form1.cmdUpdate.event(click,cmdupdate_click)
+gui.Form1.cmdUpdate.defaultvalue("")
+gui.Form1.cmdUpdate.controlgroup(0)
+
+
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Variable.UDT.uQuote.Define("QUOTE",String,QUOTE)
+Variable.UDT.uQuote.Define("ORDER_NO",String,ORDER_NO)
+Variable.UDT.uQuote.Define("CUSTOMER",String,CUSTOMER)
+Variable.UDT.uQuote.Define("DATE_ORDER",String,DATE_ORDER)
+Variable.uGlobal.uQuote.Declare("uQuote")
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.squote.Declare(String)
+V.Local.ssql.Declare(String)
+V.Local.ssql2.Declare(String)
+V.Local.scust.Declare(String)
+V.Local.srouter.Declare(String)
+V.Local.sorderno.Declare(String)
+V.Local.i.Declare(Long)
+V.Local.sudtstring.Declare(String)
+V.Local.sarray.Declare(String)
+V.Local.icolumn.Declare(Long)
+V.Local.sret.Declare(String)
+
+'open connection
+F.odbc.Connection!conx.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+
+'if the populate hook fires on the quick quote screen change the script 1 button text to say "add. Text"
+F.Intrinsic.Control.If(V.Caller.Hook,=,10710)
+	V.Passed.000201.Set("Add. Text")
+F.Intrinsic.Control.EndIf
+
+'if the populate hook fires on the standard routers screen change the script 1 button text to say "add. Text"
+F.Intrinsic.Control.If(V.Caller.Hook,=,28301)
+	V.Passed.000008.Set("Add. Text")
+F.Intrinsic.Control.EndIf
+
+'fi the script 1 button on the quick quote screen is selected
+F.Intrinsic.Control.If(V.Caller.Hook,=,10960)
+	'disable the quote textbox and set the text in the textbox as the quote number
+	Gui.Form1.txt1.Enabled(false)
+	V.Local.squote.Set(V.Passed.000003)
+	F.Intrinsic.String.LPad(V.Local.squote,"0",7,V.Local.squote)
+	Gui.Form1.txt1.Text(V.Local.squote)
+	'see if there is additional text for that quote already, if so populate the multi-line textbox
+	F.Intrinsic.String.Build("Select ADD_TEXT from GCG_3605_Add_Text where QUOTE = '{0}'",V.Local.squote,V.Local.ssql)
+	F.ODBC.Connection!conx.OpenRecordsetRO("rst",V.Local.ssql)
+	F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,False)
+			Gui.Form1.mltxt1.Text(V.ODBC.conx!rst.FieldVal!ADD_TEXT)
+	F.Intrinsic.Control.EndIf
+	Gui.Form1..Visible(true)
+	F.ODBC.conx!rst.Close
+F.Intrinsic.Control.EndIf
+
+'if the script 1 button on the standard routers screen
+F.Intrinsic.Control.If(V.Caller.Hook,=,28302)
+	'disable the quote textbox and set the text in the textbox as the quote number
+	Gui.Form1.txt1.Enabled(false)
+	V.Local.squote.Set(V.Passed.000001)
+	F.Intrinsic.String.LPad(V.Local.squote,"0",7,V.Local.squote)
+	Gui.Form1.txt1.Text(V.Local.squote)
+	'see if there is additional text for that quote already, if so populate the multi-line textbox
+	F.Intrinsic.String.Build("Select ADD_TEXT from GCG_3605_Add_Text where QUOTE = '{0}'",V.Local.squote,V.Local.ssql)
+	F.ODBC.Connection!conx.OpenRecordsetRO("rst",V.Local.ssql)
+	F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,False)
+			Gui.Form1.mltxt1.Text(V.ODBC.conx!rst.FieldVal!ADD_TEXT)
+	F.Intrinsic.Control.EndIf
+	Gui.Form1..Visible(true)
+	F.ODBC.conx!rst.Close
+F.Intrinsic.Control.EndIf
+
+
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_3605_Additional_Text.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(Form1_unload)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Main.End
+
+program.sub.form1_unload.start
+F.Intrinsic.Control.SetErrorHandler("form1_unload_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+'close connection to the database and end the program
+F.ODBC.Connection!conx.Close
+
+'close the form
+Gui.Form1..Visible(false)
+
+F.Intrinsic.Control.End
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("form1_unload_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_3605_Additional_Text.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.End
+Function.Intrinsic.Control.EndIf
+
+
+program.sub.form1_unload.end
+
+program.sub.cmdupdate_click.start
+F.Intrinsic.Control.SetErrorHandler("cmdupdate_click_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.squote.Declare(String)
+V.Local.ssql.Declare(String)
+V.Local.ssql2.Declare(String)
+V.Local.squote.Set(V.Screen.Form1!txt1.Text)
+
+'see if there is already data in the custom table for that quote, if so update it, otherwise add it
+F.Intrinsic.String.Build("Select * from GCG_3605_Add_Text where Quote = '{0}'",V.Local.squote,V.Local.ssql)
+	F.ODBC.Connection!conx.OpenRecordsetRW("rst",V.Local.ssql)
+	F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,False)
+		F.ODBC.Conx!rst.Set!ADD_TEXT(V.Screen.Form1!mltxt1.Text)
+		F.ODBC.conx!rst.Update
+	F.intrinsic.control.else
+		F.ODBC.conx!rst.AddNew
+		F.ODBC.conx!rst.Set!QUOTE(V.Screen.Form1!txt1.Text)
+		F.ODBC.conx!rst.Set!ADD_TEXT(V.Screen.Form1!mltxt1.Text)
+		F.ODBC.conx!rst.Update
+	F.Intrinsic.Control.EndIf
+'close connetion
+F.ODBC.conx!rst.Close
+
+'close form and end program
+Gui.Form1..Visible(false)
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmdupdate_click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_3605_Additional_Text.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.callsub(Form1_unload)
+Function.Intrinsic.Control.EndIf
+
+
+program.sub.cmdupdate_click.end
+
+Program.Sub.Comments.Start
+${$0$}$GCG_Additional_Text$}$WAW$}$2/1/2016
+Program.Sub.Comments.End
+
